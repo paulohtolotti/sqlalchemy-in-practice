@@ -1,21 +1,19 @@
-version: '3'
-
 services:
   db:
     image: postgres
     restart: always
     environment:
-      POSTGRES_PASSWORD: changethis!
+      POSTGRES_PASSWORD: manager
     ports:
       - "5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
   admin:
     image: dpage/pgadmin4
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: changethis!
+      PGADMIN_DEFAULT_PASSWORD: admir@321
     ports:
       - 8080:80
     volumes:
