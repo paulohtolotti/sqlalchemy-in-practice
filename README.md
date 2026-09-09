@@ -10,5 +10,5 @@ Referência online: https://blog.miguelgrinberg.com/post/introduction-to-sqlalch
 O banco de dados pode ser construído executando o arquivo docker-compose.
 
 ```bash
-docker compose up .
+docker compose up -d
 ```
