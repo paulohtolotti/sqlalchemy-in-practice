@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from os import environ
 
 from sqlalchemy import MetaData, create_engine, Engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 try:
@@ -19,13 +19,8 @@ class Model(DeclarativeBase):
         "uq": "uq_%(table_name)s_%(column_0_name)s",
         "ck": "ck_%(table_name)s_%(constraint_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-        "pk": "pk_%(table_name)s"
+        "pk": "pk_%(table_name)s" #pk_users
     })
 
-if __name__ == "__main__":
-    """
-        Métodos de criação e deleção de tabelas.
-        Não realizam alterações. Em produção é necessário usar uma ferramenta de migração.
-    """
-    Model.metadata.drop_all(engine_all_access)
-    Model.metadata.create_all(engine_all_access)
+# Classe de sessão para ser usada em outros módulos
+Session = sessionmaker(engine_all_access)

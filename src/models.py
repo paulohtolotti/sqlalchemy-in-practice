@@ -4,7 +4,8 @@ Para configurações adicionais, usamos o construtor mapped_column.
 """
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
-from src.db import Model
+from src.db import Model, engine_all_access
+
 
 class Product(Model):
     __tablename__ = "products"
@@ -12,8 +13,8 @@ class Product(Model):
     name: Mapped[str] = mapped_column(String(64))
     manufacturer: Mapped[str] = mapped_column(String(64))
     year: Mapped[int] # Não é necessário nenhuma config adicional, portanto, não usamos o construtor mapped_column
-    country: Mapped[str] = mapped_column(String(32))
-    cpu: Mapped[str] = mapped_column(String(32))
+    country: Mapped[str] = mapped_column(String(32), nullable=True)
+    cpu: Mapped[str] = mapped_column(String(32), nullable=True)
 
     @classmethod
     def from_dto(cls):
