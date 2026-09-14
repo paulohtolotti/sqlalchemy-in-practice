@@ -169,10 +169,36 @@ def aggregations():
             for manu, qty in res8:
                 print(f"{manu} produced {qty} products")
 
+def pagination(size: int = 10, page: int = 0):
+    with Session() as s:
+        with s.begin():
+            # Para a paginação funcionar corretamente, usamos um offset que pula o tamanho da página anterior
+            # Paginação com offset é problemática, pois custa O(N). Um offset de 1_000_000 faz com que o BD
+            # percorra todas as linhas.
+            page_query = select(Product).order_by(Product.id.asc()).limit(size).offset(page * size)
+            product_page = s.scalars(page_query).all()
+
+            # Uma alternativa é usar um where no lugar do offset usando algum atributo do ultimo elemento buscado
+            page_query2 = select(Product).order_by(Product.name.asc()).limit(size)
+            product_page2 = s.scalars(page_query2).all()
+            # Próxima consulta usa o ultimo elemento como referencia
+            last_item = product_page2[-1]
+            page_query3 = select(Product).order_by(Product.name.asc()).where(Product.name > last_item.name).limit(size)
+            product_page3 = s.scalars(page_query3).all()
+
+            for product in product_page:
+                print(product)
+
+            separator()
+            print(product_page2)
+            separator()
+            print(product_page3)
+
 if __name__ == "__main__":
     #simple_select()
     # select_with_scalars()
     # select_with_filter()
     # select_where_variations()
     # projections()
-    aggregations()
+    # aggregations()
+    pagination()
