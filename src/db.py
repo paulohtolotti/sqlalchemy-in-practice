@@ -1,7 +1,7 @@
-from dotenv import load_dotenv
 from os import environ
 
-from sqlalchemy import MetaData, create_engine, Engine
+from dotenv import load_dotenv
+from sqlalchemy import Engine, MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()

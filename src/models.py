@@ -2,11 +2,11 @@
 O mapeamento objeto-relacional é feito usando type hints, com a classe Mapped[t], sendo t um tipo Python.
 Para configurações adicionais, usamos o construtor mapped_column.
 """
-from typing import Optional
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
-from src.db import Model, engine_all_access
+
+from src.db import Model
 
 
 class Product(Model):
@@ -15,8 +15,8 @@ class Product(Model):
     name: Mapped[str] = mapped_column(String(64), index=True, unique=True)
     manufacturer: Mapped[str] = mapped_column(String(64), index=True)
     year: Mapped[int] = mapped_column(index=True)
-    country: Mapped[Optional[str]] = mapped_column(String(32))
-    cpu: Mapped[Optional[str]] = mapped_column(String(32))
+    country: Mapped[str | None] = mapped_column(String(32))
+    cpu: Mapped[str | None] = mapped_column(String(32))
 
     @classmethod
     def from_dto(cls):
