@@ -1,4 +1,7 @@
-import sqlalchemy
+"""
+Conteúdo referente ao capítulo 2.
+Aborda queries simples, agregação, filtros e índices
+"""
 from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import NoResultFound
 
@@ -44,6 +47,8 @@ def select_with_filter():
 
             result = s.execute(query).all()
             result2 = s.scalars(query2).first()
+            product_10 = s.get(Product, 10)
+            print(f"Product 10 is {product_10}")
             try:
                 result3 = s.scalars(non_existing_query).one()
             except NoResultFound as err:
@@ -181,6 +186,7 @@ def pagination(size: int = 10, page: int = 0):
             # Uma alternativa é usar um where no lugar do offset usando algum atributo do ultimo elemento buscado
             page_query2 = select(Product).order_by(Product.name.asc()).limit(size)
             product_page2 = s.scalars(page_query2).all()
+
             # Próxima consulta usa o ultimo elemento como referencia
             last_item = product_page2[-1]
             page_query3 = select(Product).order_by(Product.name.asc()).where(Product.name > last_item.name).limit(size)
@@ -194,6 +200,16 @@ def pagination(size: int = 10, page: int = 0):
             separator()
             print(product_page3)
 
+def delete(product_id: int = 10):
+    with Session() as s:
+        with s.begin():
+            p = s.get(Product, product_id)
+            if p:
+                s.delete(p)
+            print(s.get(Product, product_id))
+
+
+
 if __name__ == "__main__":
     #simple_select()
     # select_with_scalars()
@@ -201,4 +217,5 @@ if __name__ == "__main__":
     # select_where_variations()
     # projections()
     # aggregations()
-    pagination()
+    # pagination()
+    delete()
