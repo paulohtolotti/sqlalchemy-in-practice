@@ -1,4 +1,4 @@
-from os import environ
+import os
 
 from dotenv import load_dotenv
 from sqlalchemy import Engine, MetaData, create_engine
@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 try:
-    DB_URL = environ['ALL_ACCESS_DB_CONN_STRING']
+    DB_URL = os.environ['ALL_ACCESS_DB_CONN_STRING']
 except KeyError as e:
     traceback = e.__traceback__
     print(f"Error while fetching database url string: {e.with_traceback(traceback)}")
