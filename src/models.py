@@ -9,6 +9,7 @@ no SQLAlchemy criamos manualmente a coluna que será FK da outra tabela, usando 
 """
 import sqlalchemy as sa
 import sqlalchemy.orm as so
+from sqlalchemy import ForeignKey
 
 from src.db import Model
 
@@ -26,7 +27,7 @@ class Product(Model):
         sa.ForeignKey("manufacturers.id"), index=True
     )
 
-    # Facilita a navegação entre o relacionamento. Não é armazenado no DB
+    # Atributo virtual para facilitar a navegação
     manufacturer: so.Mapped['Manufacturer'] = so.relationship(
         back_populates="products"
     )
@@ -44,7 +45,7 @@ class Manufacturer(Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True, index=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True, index=True)
 
-    # Facilita a navegação com a entidade associada. Não é armazenado no DB.
+    # Atributo virtual para facilitar a navegação
     products: so.Mapped[list['Product']] = so.relationship(
         back_populates="manufacturer"
     )
