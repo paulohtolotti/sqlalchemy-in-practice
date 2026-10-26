@@ -11,7 +11,9 @@ except KeyError as e:
     traceback = e.__traceback__
     print(f"Error while fetching database url string: {e.with_traceback(traceback)}")
 
-engine_all_access: Engine = create_engine(DB_URL, echo=True, echo_pool=True)
+
+engine_all_access: Engine = create_engine(DB_URL, echo=True, echo_pool=True)  # pyright: ignore [reportPossiblyUnboundVariable, reportGeneralTypeIssues]
+
 
 
 class Model(DeclarativeBase):

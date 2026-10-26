@@ -1,7 +1,7 @@
 import rich
 from psycopg2.errors import NotNullViolation
 from sqlalchemy import func, label, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload, subqueryload
 
 from src import models
@@ -139,7 +139,7 @@ def deleting_one():
             m: models.Manufacturer | None = s.get(models.Manufacturer, 14)
             if m:
                 s.delete(m)
-        except (IntegrityError, NotNullViolation):
+        except (IntegrityError, NotNullViolation, SQLAlchemyError):
             rich.print("[bold red]Erro de integridade referencial[/bold red]")
 
 
@@ -151,5 +151,5 @@ if __name__ == "__main__":
     # join2()
     # lazy_loading()
     # eager_loading()
-    # eager_loading_subquery()
-    deleting_one()
+    eager_loading_subquery()
+    # deleting_one()
