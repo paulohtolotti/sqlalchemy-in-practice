@@ -12,6 +12,7 @@ def exercise1():
         for idx, r in enumerate(res, start=1):
             print(f"#{idx}: {r}")
 
+
 def exercise2():
     """Computadores que usam a CPU Z80"""
     with Session() as session, session.begin():
@@ -20,7 +21,8 @@ def exercise2():
 
         for idx, r in enumerate(result):
             print(f"#{idx}: {r.name}, CPU: {r.cpu}")
-            
+
+
 def exercise3():
     """Computadores que usam a CPU Z80, 6502 ou compatíveis, criados antes de 1980 e em ordem alfabética"""
     with Session() as session, session.begin():
@@ -35,6 +37,7 @@ def exercise3():
         for idx, r in enumerate(result):
             print(f"#{idx}: {r.name}, CPU: {r.cpu} - {r.year}")
 
+
 def exercise4():
     """Todos os fabricantes que construíram computadores na década de 80"""
     with Session() as session, session.begin():
@@ -43,6 +46,7 @@ def exercise4():
 
         for idx, r in enumerate(result):
             print(f"#{idx}: {r}")
+
 
 def exercise5():
     """Todos os fabricantes que começam com T, em ordem alfabética"""
@@ -53,9 +57,10 @@ def exercise5():
             .order_by(Product.manufacturer.asc())
         )
         result = session.scalars(query).all()
-        
+
         for idx, r in enumerate(result):
             print(f"#{idx}: {r}")
+
 
 def exercise6():
     """Primeiro e ultimo ano que um computador foi construído na Croácia e o nome do computaador"""
@@ -64,23 +69,23 @@ def exercise6():
             select(
                 func.count(Product.country),
                 func.min(Product.year),
-                func.max(Product.year)
+                func.max(Product.year),
             )
             .group_by(Product.country)
             .having(Product.country == "Croatia")
         )
         res = session.execute(query).all()
-        print(f"{res[0][0]} computadores foram produzidos na Croácia entre {res[0][1]} e {res[0][2]}")
+        print(
+            f"{res[0][0]} computadores foram produzidos na Croácia entre {res[0][1]} e {res[0][2]}"
+        )
+
 
 def exercise7():
     """Contagem de computadores por ano juntamente com o ano. Anos sem computadores não aparecem"""
     with Session() as session, session.begin():
         counter = func.count(Product.year).label("counter")
         query = (
-            select(
-                counter,
-                Product.year
-            )
+            select(counter, Product.year)
             .group_by(Product.year)
             .having(counter > 0)
             .order_by(counter.desc())
@@ -90,15 +95,14 @@ def exercise7():
         for r in result:
             print(f"{r[1]}: {r[0]} computador(es) construído(s)")
 
+
 def exercise8():
     """Número de fabricantes dos estados unidos"""
     with Session() as session, session.begin():
-        query = (
-            select(func.count(Product.manufacturer.distinct()))
-            .where(Product.country == "USA")
-        )
+        query = select(func.count(Product.manufacturer.distinct())).where(Product.country == "USA")
         res = session.scalar(query)
         print(f"Existem {res} fabricantes nos EUA")
+
 
 if __name__ == "__main__":
     exercise1()
@@ -109,4 +113,3 @@ if __name__ == "__main__":
     # exercise6()
     # exercise7()
     # exercise8()
-

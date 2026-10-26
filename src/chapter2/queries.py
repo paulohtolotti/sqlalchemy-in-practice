@@ -2,6 +2,7 @@
 Conteúdo referente ao capítulo 2.
 Aborda queries simples, agregação, filtros e índices
 """
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import NoResultFound
 
@@ -10,9 +11,10 @@ from src.models import Product
 
 
 def separator():
-    print("-"*50)
-    print("#"*50)
-    print("-"*50)
+    print("-" * 50)
+    print("#" * 50)
+    print("-" * 50)
+
 
 def simple_select():
     with Session() as s, s.begin():
@@ -24,6 +26,7 @@ def simple_select():
         print(f"Resultado obtido {res[0:10:3]}.\n Res é uma lista de {type(res[0])}")
         res2 = s.execute(query).first()
         print(f"Primeiro resultado {res2}")
+
 
 def select_with_scalars():
     """
@@ -38,6 +41,7 @@ def select_with_scalars():
         # Res2 e Res3 são equivalentes. Sendo res2 apenas um shorthand
         print(f"Resultado {res}, do tipo {type(res)}")
 
+
 def select_with_filter():
     with Session() as s, s.begin():
         query = select(Product).where(Product.id >= 145)
@@ -50,7 +54,7 @@ def select_with_filter():
         product_10 = s.get(Product, 10)
         print(f"Product 10 is {product_10}")
         try:
-            result3 = s.scalars(non_existing_query).one() # noqa: F841
+            result3 = s.scalars(non_existing_query).one()  # noqa: F841
         except NoResultFound:
             print("No row as found")
 
@@ -67,19 +71,16 @@ def select_with_filter():
         separator()
         print(result5)
 
+
 def select_where_variations():
     with Session() as session, session.begin():
-        q1 = (select(Product)
-              .where(Product.year > 2000)
-              .where(Product.name.contains("z"))
-        )
+        q1 = select(Product).where(Product.year > 2000).where(Product.name.contains("z"))
         q2 = select(Product).where(Product.year > 1975, Product.manufacturer == "Comodore")
-        q3 = (
-            select(Product)
-            .where(or_(
+        q3 = select(Product).where(
+            or_(
                 Product.manufacturer == "Radio Shack",
-                Product.manufacturer == "Sord Computer Corporation"
-            ))
+                Product.manufacturer == "Sord Computer Corporation",
+            )
         )
         q4 = (
             select(Product)
@@ -98,6 +99,7 @@ def select_where_variations():
         separator()
         for r in res4:
             print(f"{r.name} by {r.manufacturer}- {r.year}")
+
 
 def projections():
     with Session() as session, session.begin():
@@ -118,6 +120,7 @@ def projections():
             print(f"{name} - {manu}")
         separator()
 
+
 def aggregations():
     with Session() as session, session.begin():
         query_unique_manufactures = select(func.count(Product.id)).distinct()
@@ -125,22 +128,18 @@ def aggregations():
         query_sum = select(func.sum(Product.year))
         query_min_max = select(func.min(Product.year), func.max(Product.year))
         query_manufacturers = select(Product.manufacturer).distinct()
-        query_manufacturers2 = select(Product.manufacturer).distinct().group_by(Product.manufacturer)
-        query_manufacturers_products = (
-            select(
-                Product.manufacturer,
-                func.count()
-            ).group_by(Product.manufacturer)
+        query_manufacturers2 = (
+            select(Product.manufacturer).distinct().group_by(Product.manufacturer)
+        )
+        query_manufacturers_products = select(Product.manufacturer, func.count()).group_by(
+            Product.manufacturer
         )
         # Por ser executada antes do agrupamento a clausula where não pode ser para filtrar agregações.
         # Nessa caso usamos o having
         num_products = func.count().label(None)
 
         query_manufacturers_products_2 = (
-            select(
-                Product.manufacturer,
-                num_products
-            )
+            select(Product.manufacturer, num_products)
             .group_by(Product.manufacturer)
             .having(num_products >= 6)
         )
@@ -149,7 +148,9 @@ def aggregations():
         res2 = session.scalar(query_current_user)
         res3 = session.scalar(query_sum)
         res4 = session.execute(query_min_max)
-        res5 = session.scalars(query_manufacturers).all() # Podemos usar pois há somente 1 coluna por linha na seleção
+        res5 = session.scalars(
+            query_manufacturers
+        ).all()  # Podemos usar pois há somente 1 coluna por linha na seleção
         res6 = session.scalars(query_manufacturers2).all()
         res7 = session.execute(query_manufacturers_products).all()
         res8 = session.execute(query_manufacturers_products_2).all()
@@ -172,11 +173,15 @@ def aggregations():
         for manu, qty in res8:
             print(f"{manu} produced {qty} products")
 
+
 def pagination(size: int = 10, page: int = 0):
     with Session() as s, s.begin():
-        # Para a paginação funcionar corretamente, usamos um offset que pula o tamanho da página anterior
-        # Paginação com offset é problemática, pois custa O(N). Um offset de 1_000_000 faz com que o BD
-        # percorra todas as linhas.
+        """
+       Para a paginação funcionar corretamente, usamos um offset que pula o tamanho da página anterior
+        Paginação com offset é problemática, pois custa O(N). Um offset de 1_000_000 faz com que o BD
+        percorra todas as linhas.
+        """
+
         page_query = select(Product).order_by(Product.id.asc()).limit(size).offset(page * size)
         product_page = s.scalars(page_query).all()
 
@@ -186,7 +191,12 @@ def pagination(size: int = 10, page: int = 0):
 
         # Próxima consulta usa o ultimo elemento como referencia
         last_item = product_page2[-1]
-        page_query3 = select(Product).order_by(Product.name.asc()).where(Product.name > last_item.name).limit(size)
+        page_query3 = (
+            select(Product)
+            .order_by(Product.name.asc())
+            .where(Product.name > last_item.name)
+            .limit(size)
+        )
         product_page3 = s.scalars(page_query3).all()
 
         for product in product_page:
@@ -197,6 +207,7 @@ def pagination(size: int = 10, page: int = 0):
         separator()
         print(product_page3)
 
+
 def delete(product_id: int = 10):
     with Session() as s, s.begin():
         p = s.get(Product, product_id)
@@ -205,9 +216,8 @@ def delete(product_id: int = 10):
         print(s.get(Product, product_id))
 
 
-
 if __name__ == "__main__":
-    #simple_select()
+    # simple_select()
     # select_with_scalars()
     # select_with_filter()
     # select_where_variations()
