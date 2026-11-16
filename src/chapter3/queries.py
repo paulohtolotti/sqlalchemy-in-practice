@@ -1,6 +1,6 @@
 import rich
 from psycopg2.errors import NotNullViolation
-from sqlalchemy import func, label, select
+from sqlalchemy import func, label, select, text, Row
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload, subqueryload
 
@@ -90,7 +90,31 @@ def lazy_loading():
                 f"{product.name}, {product.manufacturer.name}"
             )  # Executa queries repetidas para o manufacturer
 
+def text_query():
+    with Session() as s, s.begin():
+        query = text(
+            """
+            SELECT p.*, m.name FROM products p
+            INNER JOIN manufacturers m ON m.id = p.manufacturer_id 
+            """
+        )
+        result: Row = s.execute(query).all()
 
+        for res in result:
+            print(res)
+
+def text_query2():
+    with Session() as s, s.begin():
+        query = select(models.Product).from_statement(text(
+            """
+                SELECT * FROM products
+            """
+        )
+        )
+        result: Row = s.execute(query).all()
+
+        for res in result:
+            print(res)
 """
 O padrão do SQLAlchemy é carregamento lazy.
 Podemos alterar o carregamento padrão usando um loader, ou definindo no relacionamento do modelo.
@@ -155,7 +179,7 @@ def detaching():
         # Se usarmos a type hint | None a FK é opcional e a entidade sobrevive
         m.products.remove(p)
         print(p)
-        
+
 
 
 
@@ -167,6 +191,9 @@ if __name__ == "__main__":
     # join2()
     # lazy_loading()
     # eager_loading()
+    # eager_loading_subquery()
     #eager_loading_subquery()
     # deleting_one()
+    text_query()
+    # text_query2()
     detaching()
