@@ -28,6 +28,8 @@ import sqlalchemy.orm as so
 
 from src.db import Model
 
+__all__ = ['Country', 'Manufacturer', 'Product']
+
 ProductCountry = sa.Table(
     "products_countries",
     Model.metadata,

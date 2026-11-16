@@ -98,7 +98,7 @@ def text_query():
             INNER JOIN manufacturers m ON m.id = p.manufacturer_id 
             """
         )
-        result: Row = s.execute(query).all()
+        result = s.execute(query).all()
 
         for res in result:
             print(res)
@@ -111,7 +111,7 @@ def text_query2():
             """
         )
         )
-        result: Row = s.execute(query).all()
+        result = s.execute(query).all()
 
         for res in result:
             print(res)
