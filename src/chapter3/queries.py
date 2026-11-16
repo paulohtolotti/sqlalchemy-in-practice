@@ -124,7 +124,8 @@ def deleting_one():
     """
     Deletar do lado 1 não costuma causar problemas, pois não haveria ferimento de integridade relacional.
     A(b_id) B -> Deletar A não interfere em B
-    A(b_id) B(x) -> Deletar B faz com que A aponte para valores que não existem, causando erro de integridade relacional
+    A(b_id) B(x) -> Deletar B faz com que A aponte para valores que não existem, causando erro de integridade relacional, visto
+    que a coluna do relacionamento é obrigatória.
     """
     with Session() as s, s.begin():
         rich.print("Deletando entidade do lado 1")
@@ -134,13 +135,28 @@ def deleting_one():
             s.delete(p)
             rich.print("Deletado com sucesso")
 
-        try:
-            rich.print("Tentando deletar uma entidade do lado N. Vai gerar erro de referência")
-            m: models.Manufacturer | None = s.get(models.Manufacturer, 14)
-            if m:
-                s.delete(m)
-        except (IntegrityError, NotNullViolation, SQLAlchemyError):
-            rich.print("[bold red]Erro de integridade referencial[/bold red]")
+        rich.print("Tentando deletar uma entidade do lado N. Vai gerar erro de referência, caso não seja configurado um cascade de deleção")
+        m: models.Manufacturer | None = s.get(models.Manufacturer, 14)
+
+        if m:
+            s.delete(m)
+
+def detaching():
+    with Session() as s, s.begin():
+        p: models.Product | None = s.get(models.Product, 1)
+        print(p)
+
+        if not p:
+            return
+
+        m = p.manufacturer
+
+        # Removendo as entidades associadas. Devido ao cascade all, delete-orphan os produtos órfãos são deletados.
+        # Se usarmos a type hint | None a FK é opcional e a entidade sobrevive
+        m.products.remove(p)
+        print(p)
+        
+
 
 
 if __name__ == "__main__":
@@ -151,5 +167,6 @@ if __name__ == "__main__":
     # join2()
     # lazy_loading()
     # eager_loading()
-    eager_loading_subquery()
+    #eager_loading_subquery()
     # deleting_one()
+    detaching()
