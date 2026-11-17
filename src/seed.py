@@ -8,7 +8,6 @@ import logging
 from src.db import Model, Session, engine_all_access
 from src.models import Country, Manufacturer, Product
 
-
 logger = logging.getLogger(__name__)
 
 
