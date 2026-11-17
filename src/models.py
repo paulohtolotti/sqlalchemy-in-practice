@@ -28,14 +28,15 @@ import sqlalchemy.orm as so
 
 from src.db import Model
 
-__all__ = ['Country', 'Manufacturer', 'Product']
+__all__ = ["Country", "Manufacturer", "Product"]
 
 ProductCountry = sa.Table(
     "products_countries",
     Model.metadata,
     sa.Column("product_id", sa.ForeignKey("products.id"), primary_key=True),
-    sa.Column("country_id", sa.ForeignKey("countries.id"), primary_key=True)
+    sa.Column("country_id", sa.ForeignKey("countries.id"), primary_key=True),
 )
+
 
 class Product(Model):
     __tablename__ = "products"
@@ -52,8 +53,9 @@ class Product(Model):
     # Atributo virtual para facilitar a navegação
     manufacturer: so.Mapped[Manufacturer] = so.relationship(back_populates="products")
     countries: so.Mapped[list[Country]] = so.relationship(
-        secondary=ProductCountry, back_populates='products'
+        secondary=ProductCountry, back_populates="products"
     )
+
     @classmethod
     def from_dto(cls):
         """Cria um Produto a partir de um DTO. Exemplo de um construtor alternativo"""
@@ -70,7 +72,8 @@ class Manufacturer(Model):
 
     # Atributo virtual para facilitar a navegação
     products: so.Mapped[list[Product]] = so.relationship(
-        cascade="all, delete-orphan", back_populates="manufacturer") # Deleta produtos associados quando o fabricante é removido
+        cascade="all, delete-orphan", back_populates="manufacturer"
+    )  # Deleta produtos associados quando o fabricante é removido
 
     def __repr__(self):
         return f"Manufacturer ({self.id}, {self.name})"
@@ -86,7 +89,8 @@ class Country(Model):
 
     # Atributos virtuais
     products: so.Mapped[list[Product]] = so.relationship(
-        secondary=ProductCountry, back_populates='countries'
+        secondary=ProductCountry, back_populates="countries"
     )
+
     def __repr__(self):
         return f"Country({self.id}, {self.name})"

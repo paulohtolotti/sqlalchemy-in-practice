@@ -4,10 +4,7 @@ from src.db import Session
 from src.models import *
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s %(name)s %(funcName)s %(message)s',
-    level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s %(name)s %(funcName)s %(message)s", level=logging.INFO)
 
 
 def adding_countries():
@@ -25,7 +22,7 @@ def adding_countries():
         if country1 and country2:
             product.countries.append(country1)
             product.countries.append(country2)
-        
+
 
 def removing_countries():
     # Removendo os países adicionados anteriormente
@@ -34,9 +31,11 @@ def removing_countries():
 
         if not product:
             logger.error("Produto com id 20 não existe")
+            return
 
         # Limpando a associação
         product.countries = [c for c in product.countries if c.id != 2 and c.id != 3]
+
 
 if __name__ == "__main__":
     removing_countries()

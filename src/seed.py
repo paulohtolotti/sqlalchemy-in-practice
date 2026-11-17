@@ -11,6 +11,7 @@ from src.models import Country, Manufacturer, Product
 
 logger = logging.getLogger(__name__)
 
+
 def initial_seed():
     with open("./data/products.csv", "r", encoding="utf-8") as file:
         # Realiza a leitura dos dados como um dicionário. Usa a primeira linha como referência
@@ -31,13 +32,14 @@ def initial_seed():
                     session.add(manufacturer)
                     manufacturers[manufacturer_name] = manufacturer
 
-
                 for c in countries:
                     if c not in all_countries:
                         logger.info("Criando %s", c)
                         country = Country(name=c)
                         session.add(country)
-                        all_countries[c] = country # "USA": <__main__.Country object at 0x000001D2CE37F8C0>
+                        all_countries[c] = (
+                            country  # "USA": <__main__.Country object at 0x000001D2CE37F8C0>
+                        )
                     logger.info("Associando %s ao produto %s", c, product.name)
                     all_countries[c].products.append(product)
 

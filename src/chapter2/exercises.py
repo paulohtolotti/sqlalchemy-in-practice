@@ -63,7 +63,9 @@ def exercise5():
 
 
 def exercise6():
-    """Primeiro e ultimo ano que um computador foi construído na Croácia e o nome do computaador"""
+    """Primeiro e ultimo ano que um computador foi construído na Croácia e o nome do computador.
+    Desatualizado para a mudança no modelo de N-N
+    """
     with Session() as session, session.begin():
         query = (
             select(

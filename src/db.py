@@ -15,7 +15,6 @@ except KeyError as e:
 engine_all_access: Engine = create_engine(DB_URL, echo=True, echo_pool=True)  # pyright: ignore [reportPossiblyUnboundVariable, reportGeneralTypeIssues]
 
 
-
 class Model(DeclarativeBase):
     metadata = MetaData(
         naming_convention={

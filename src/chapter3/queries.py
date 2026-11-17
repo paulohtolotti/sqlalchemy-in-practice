@@ -1,7 +1,5 @@
 import rich
-from psycopg2.errors import NotNullViolation
-from sqlalchemy import func, label, select, text, Row
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import joinedload, subqueryload
 
 from src import models
@@ -90,6 +88,7 @@ def lazy_loading():
                 f"{product.name}, {product.manufacturer.name}"
             )  # Executa queries repetidas para o manufacturer
 
+
 def text_query():
     with Session() as s, s.begin():
         query = text(
@@ -103,18 +102,22 @@ def text_query():
         for res in result:
             print(res)
 
+
 def text_query2():
     with Session() as s, s.begin():
-        query = select(models.Product).from_statement(text(
-            """
+        query = select(models.Product).from_statement(
+            text(
+                """
                 SELECT * FROM products
             """
-        )
+            )
         )
         result = s.execute(query).all()
 
         for res in result:
             print(res)
+
+
 """
 O padrão do SQLAlchemy é carregamento lazy.
 Podemos alterar o carregamento padrão usando um loader, ou definindo no relacionamento do modelo.
@@ -159,11 +162,14 @@ def deleting_one():
             s.delete(p)
             rich.print("Deletado com sucesso")
 
-        rich.print("Tentando deletar uma entidade do lado N. Vai gerar erro de referência, caso não seja configurado um cascade de deleção")
+        rich.print(
+            "Tentando deletar uma entidade do lado N. Vai gerar erro de referência, caso não seja configurado um cascade de deleção"
+        )
         m: models.Manufacturer | None = s.get(models.Manufacturer, 14)
 
         if m:
             s.delete(m)
+
 
 def detaching():
     with Session() as s, s.begin():
@@ -181,8 +187,6 @@ def detaching():
         print(p)
 
 
-
-
 if __name__ == "__main__":
     # find_product_by_name('Cor')
     # find_manufacturer('teXas')
@@ -192,7 +196,7 @@ if __name__ == "__main__":
     # lazy_loading()
     # eager_loading()
     # eager_loading_subquery()
-    #eager_loading_subquery()
+    # eager_loading_subquery()
     # deleting_one()
     text_query()
     # text_query2()
