@@ -5,14 +5,24 @@ Realiza o seed do banco de dados a partir de um CSV (/data/products.csv)
 import csv
 import logging
 
+from sqlalchemy import delete
+
 from src.db import Model, Session, engine_all_access
-from src.models import Country, Manufacturer, Product
+from src.models import Country, Manufacturer, Product, ProductCountry
 
 logger = logging.getLogger(__name__)
 
 
 def initial_seed():
     with open("./data/products.csv", "r", encoding="utf-8") as file:
+        # Clean all records on the database
+        with Session() as s, s.begin():
+            s.execute(delete(ProductCountry))
+            s.execute(delete(Manufacturer))
+            s.execute(delete(Country))
+            s.execute(delete(Product))
+            
+
         # Realiza a leitura dos dados como um dicionário. Usa a primeira linha como referência
         reader = csv.DictReader(file)
         products = set()
@@ -49,10 +59,11 @@ def initial_seed():
 
 
 def clean_database():
+    """Drop and create all tables. Useful for testing only."""
     Model.metadata.drop_all(engine_all_access)
     Model.metadata.create_all(engine_all_access)
 
 
 if __name__ == "__main__":
-    clean_database()
+    # clean_database()
     initial_seed()
