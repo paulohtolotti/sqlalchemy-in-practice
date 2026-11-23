@@ -34,7 +34,7 @@ from sqlalchemy.types import DateTime
 
 from src.db import Model
 
-__all__ = ["Country", "Customer", "Manufacturer", "Order", "Product"]
+__all__ = ["Country", "Customer", "Manufacturer", "Order", "OrderItem", "Product"]
 
 ProductCountry = sa.Table(
     "products_countries",
@@ -108,7 +108,7 @@ class Customer(Model):
     id: so.Mapped[uuid.UUID] = so.mapped_column(primary_key=True, index=True, default=uuid.uuid4)
     name: so.Mapped[str] = so.mapped_column(sa.String(255), index=True)
     address: so.Mapped[str] = so.mapped_column(sa.String)
-    phone: so.Mapped[str] = so.mapped_column(sa.String(12), unique=True)
+    phone: so.Mapped[str] = so.mapped_column(sa.String(20), unique=True)
 
     orders: so.WriteOnlyMapped[Order] = so.relationship(back_populates="customer")
 
@@ -145,3 +145,6 @@ class OrderItem(Model):
 
     product: so.Mapped[Product] = so.relationship(back_populates="order_items")
     order: so.Mapped[Order] = so.relationship(back_populates="order_items")
+
+    def __repr__(self):
+        return f"OrderItem(p_id: {self.product_id}, order_id: {self.order_id})"
