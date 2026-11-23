@@ -23,12 +23,18 @@ Criamos uma tabela associativa usando o sqlalchemy core.
 O mapeamento entre A e B é feito somente via entidades e usando o atributo secondary.
 """
 
+import datetime
+import decimal
+import uuid
+
 import sqlalchemy as sa
 import sqlalchemy.orm as so
+from sqlalchemy.schema import ForeignKey
+from sqlalchemy.types import DateTime
 
 from src.db import Model
 
-__all__ = ["Country", "Manufacturer", "Product"]
+__all__ = ["Country", "Customer", "Manufacturer", "Order", "Product"]
 
 ProductCountry = sa.Table(
     "products_countries",
@@ -55,6 +61,7 @@ class Product(Model):
     countries: so.Mapped[list[Country]] = so.relationship(
         secondary=ProductCountry, back_populates="products"
     )
+    order_items: so.WriteOnlyMapped[OrderItem] = so.relationship(back_populates="product")
 
     @classmethod
     def from_dto(cls):
@@ -94,3 +101,47 @@ class Country(Model):
 
     def __repr__(self):
         return f"Country({self.id}, {self.name})"
+
+
+class Customer(Model):
+    __tablename__ = "customers"
+    id: so.Mapped[uuid.UUID] = so.mapped_column(primary_key=True, index=True, default=uuid.uuid4)
+    name: so.Mapped[str] = so.mapped_column(sa.String(255), index=True)
+    address: so.Mapped[str] = so.mapped_column(sa.String)
+    phone: so.Mapped[str] = so.mapped_column(sa.String(12), unique=True)
+
+    orders: so.WriteOnlyMapped[Order] = so.relationship(back_populates="customer")
+
+    def __repr__(self):
+        return f'Customer({self.id.hex}, "{self.name}")'
+
+
+class Order(Model):
+    __tablename__ = "orders"
+    id: so.Mapped[uuid.UUID] = so.mapped_column(primary_key=True, index=True, default=uuid.uuid4)
+    timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
+        DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC)
+    )
+    customer_id: so.Mapped[uuid.UUID] = so.mapped_column(ForeignKey("customers.id"))
+
+    customer: so.Mapped[Customer] = so.relationship(
+        back_populates="orders", lazy="raise", order_by=timestamp.desc()
+    )
+    order_items: so.Mapped[list[OrderItem]] = so.relationship(back_populates="order")
+
+    def __repr__(self):
+        return f"Order({self.id.hex})"
+
+
+class OrderItem(Model):
+    __tablename__ = "orders_items"
+
+    product_id: so.Mapped[uuid.UUID] = so.mapped_column(
+        ForeignKey("products.id"), primary_key=True
+    )
+    order_id: so.Mapped[uuid.UUID] = so.mapped_column(ForeignKey("orders.id"), primary_key=True)
+    unit_price: so.Mapped[decimal.Decimal] = so.mapped_column(sa.DECIMAL(10, 2))
+    quantity: so.Mapped[int] = so.mapped_column(sa.Integer)
+
+    product: so.Mapped[Product] = so.relationship(back_populates="order_items")
+    order: so.Mapped[Order] = so.relationship(back_populates="order_items")

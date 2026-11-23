@@ -19,9 +19,7 @@ def exercise1():
         query = (
             select(Product)
             .join(Product.countries)
-            .where(
-                or_(Country.name == 'UK', Country.name == 'USA')
-            )
+            .where(or_(Country.name == "UK", Country.name == "USA"))
             .options(contains_eager(Product.countries))
             .distinct()
         )
@@ -29,6 +27,7 @@ def exercise1():
         rich.print(f"Total {len(res)}")
         for r in res:
             rich.print(f"{r} made on {r.countries}")
+
 
 def exercise2():
     # Produto não feitos nos EUA ou UK. Se o produto for feito
@@ -58,7 +57,7 @@ def exercise2():
         query = (
             select(Product)
             .join(Product.countries)
-            .where(Country.name.notin_(['UK', 'USA']))
+            .where(Country.name.notin_(["UK", "USA"]))
             .options(joinedload(Product.countries))
             .order_by(Product.id.asc())
             .distinct()
@@ -67,6 +66,7 @@ def exercise2():
         rich.print(f"Total: {len(res)}")
         for r in res:
             rich.print(f"{r} made on {r.countries}")
+
 
 def exercise3():
     # Países que produziram CPU Z80 ou clones
@@ -91,6 +91,7 @@ def exercise3():
         for r in res:
             rich.print(f"{r} made {r.products}")
 
+
 def exercise4():
     # Países que produziram coputadores na década de 1970
     """
@@ -112,6 +113,7 @@ def exercise4():
         rich.print(f"Total {len(res)}")
         for r in res:
             rich.print(f"{r}")
+
 
 def exercise5():
     # 5 países com mais produtos, desempate em ordem alfabética
@@ -137,6 +139,7 @@ def exercise5():
         for r in res:
             rich.print(f"{r[0]}: {r[1]} products")
 
+
 def exercise6():
     """
     SELECT m.name, COUNT(p.id) as "Qtd Produtos" FROM manufacturers m
@@ -154,7 +157,7 @@ def exercise6():
             select(Manufacturer.name, p_count)
             .join(Manufacturer.products)
             .join(Product.countries)
-            .where(Country.name.in_(['USA', 'UK']))
+            .where(Country.name.in_(["USA", "UK"]))
             .group_by(Manufacturer.name)
             .having(p_count > 3)
             .order_by(p_count.desc(), Manufacturer.name.asc())
@@ -162,6 +165,7 @@ def exercise6():
         res = s.execute(query).all()
         for r in res:
             rich.print(f"{r[0]}: {r[1]}")
+
 
 def exercise7():
     """
@@ -185,6 +189,7 @@ def exercise7():
         for r in res:
             rich.print(f"{r[0]}: {r[1]}")
 
+
 def exercise8():
     """
     SELECT p.name, COUNT(c.id) FROM products p
@@ -198,13 +203,14 @@ def exercise8():
         query = (
             select(Product.name)
             .join(Product.countries)
-            .where(Country.name.in_(['USA', 'UK']))
+            .where(Country.name.in_(["USA", "UK"]))
             .group_by(Product.name)
             .having(func.count(Country.id) > 1)
         )
         res = s.execute(query).all()
         for r in res:
             rich.print(f"{r}")
+
 
 if __name__ == "__main__":
     # exercise1()

@@ -21,7 +21,6 @@ def initial_seed():
             s.execute(delete(Manufacturer))
             s.execute(delete(Country))
             s.execute(delete(Product))
-            
 
         # Realiza a leitura dos dados como um dicionário. Usa a primeira linha como referência
         reader = csv.DictReader(file)

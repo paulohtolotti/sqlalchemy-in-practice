@@ -21,3 +21,4 @@ dev = [
 
 [tool.ruff]
 line-length = 99
+exclude = ['migrations']
