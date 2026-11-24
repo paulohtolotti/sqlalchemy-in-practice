@@ -1,16 +1,17 @@
+import locale
 from decimal import Decimal
-from threading import local
 
 import rich
-import locale
 from rich.console import Console
 from sqlalchemy import func, select
 
 from src.db import Session
-from src.models import Customer, Order, OrderItem, Product
+from src.models import Customer, Order, OrderItem, Product, ProductReview
 
 console = Console()
 locale.setlocale(locale.LC_MONETARY, "pt_BR.UTF-8")
+
+
 def create_customer():
     with Session() as s, s.begin():
         customer = Customer(name="John Foo", phone="11995884156", address="Green Dolphin Street")
@@ -25,7 +26,9 @@ def query_customer():
             rich.print(f"{r}")
 
 
-def order_item_factory(product: Product, unit_price: Decimal = Decimal("10.50"), quantity: int = 1):
+def order_item_factory(
+    product: Product, unit_price: Decimal = Decimal("10.50"), quantity: int = 1
+):
     return OrderItem(product=product, quantity=quantity, unit_price=unit_price)
 
 
@@ -69,11 +72,10 @@ def deletes():
         )
         s.delete(order_item)
 
+
 def write_only_relationship():
     with Session() as s:
-        customer = s.scalar(
-            select(Customer).where(Customer.name == 'Hayden Collins')
-        )
+        customer = s.scalar(select(Customer).where(Customer.name == "Hayden Collins"))
 
         if not customer:
             return
@@ -87,15 +89,15 @@ def write_only_relationship():
         for o in orders:
             rich.print(o)
 
+
 def total_clientes_ordens():
     with Session() as s:
-        c_total = s.scalar(select(
-            func.count(Customer.id)
-        ))
-        p_total = s.scalar(select(
-            func.count(Order.id)
-        ))
-        console.print(f"[blue underline]Total clientes[/blue underline] {c_total} x [blue underline]Total de pedidos[/blue underline] {p_total}")
+        c_total = s.scalar(select(func.count(Customer.id)))
+        p_total = s.scalar(select(func.count(Order.id)))
+        console.print(
+            f"[blue underline]Total clientes[/blue underline] {c_total} x [blue underline]Total de pedidos[/blue underline] {p_total}"
+        )
+
 
 def total_produto_pedido():
     with Session() as s:
@@ -110,6 +112,7 @@ def total_produto_pedido():
 
         for r in res:
             console.print(r)
+
 
 def total_vendido_produto():
     """
@@ -131,6 +134,7 @@ def total_vendido_produto():
         for r in res:
             console.print(f"{r[0]} vendeu {locale.currency(r[1], grouping=True)}")
 
+
 def total_por_pedido():
     """
     SELECT oi.order_id as "ID Pedido", SUM(oi.quantity * oi.unit_price) as "Total Pedido"
@@ -141,13 +145,12 @@ def total_por_pedido():
     with Session() as s:
         total = func.sum(OrderItem.quantity * OrderItem.unit_price).label(None)
         query = (
-            select(OrderItem.order_id, total)
-            .group_by(OrderItem.order_id)
-            .order_by(total.desc())
+            select(OrderItem.order_id, total).group_by(OrderItem.order_id).order_by(total.desc())
         )
         res = s.execute(query).all()
         for r in res:
             console.print(f"Pedido {r[0]}: total {locale.currency(r[1], grouping=True)}")
+
 
 def produtos_mais_vendidos():
     """
@@ -171,6 +174,7 @@ def produtos_mais_vendidos():
         for r in res:
             console.print(f"{r[0]} vendeu {r[1]} unidades")
 
+
 def total_pedidos_em_novembro():
     """
     SELECT o.id as "ID Ordem", SUM(oi.quantity * oi.unit_price) as "Total"
@@ -186,7 +190,7 @@ def total_pedidos_em_novembro():
         query = (
             select(Order.id, total_pedido)
             .join(Order.order_items)
-            .where(Order.timestamp.between('11-01-2022', '12-01-2022'))
+            .where(Order.timestamp.between("11-01-2022", "12-01-2022"))
             .group_by(Order.id)
             .order_by(total_pedido.desc())
             .limit(5)
@@ -194,6 +198,7 @@ def total_pedidos_em_novembro():
         res = s.execute(query).all()
         for r in res:
             console.print(f"Order {r[0]} total {locale.currency(r[1], grouping=True)}")
+
 
 def top5_produtos_mais_vendidos_novembro():
     """Busca os 5 produtos mais vendidos de novembro de 2022, trazendo seu nome e quantidade vendida
@@ -212,15 +217,102 @@ def top5_produtos_mais_vendidos_novembro():
             select(Product.name, total)
             .join(Product.order_items)
             .join(OrderItem.order)
-            .where(Order.timestamp.between('11-01-2022', '12-01-2022'))
+            .where(Order.timestamp.between("11-01-2022", "12-01-2022"))
             .group_by(Product.id)
             .order_by(total.desc())
             .limit(5)
         )
         res = s.execute(query).all()
-        
+
         for r in res:
             console.print(f"{r[0]} vendeu {r[1]} unidades")
+
+
+def unidades_vendida_mes_ano():
+    """
+    SELECT
+        EXTRACT(MONTH FROM o.timestamp) as "Mês",
+        EXTRACT(YEAR FROM o.timestamp) as "Ano",
+        SUM(oi.quantity) as "Unidades vendidas"
+    FROM orders o
+    INNER JOIN orders_items oi ON o.id = oi.order_id
+    WHERE o.timestamp BETWEEN '01-01-2022' AND '01-01-2023'
+    GROUP BY EXTRACT(MONTH FROM o.timestamp), EXTRACT(YEAR FROM o.timestamp)
+    ORDER BY "Mês", "Ano";
+    """
+    with Session() as s:
+        month = func.extract("month", Order.timestamp).label(None)
+        year = func.extract("year", Order.timestamp).label(None)
+        units_sold = func.sum(OrderItem.quantity).label(None)
+
+        query = (
+            select(month, year, units_sold)
+            .join(Order.order_items)
+            .where(Order.timestamp.between("01-01-2022", "01-01-2023"))
+            .group_by(month, year)
+            .order_by(month, year)
+        )
+        res = s.execute(query).all()
+        for r in res:
+            console.print(f"{r[0]}/{r[1]}: {r[2]} unidades vendidas")
+
+
+def media_avaliacoes():
+    """
+    SELECT avg(rating) FROM products_reviws;
+    """
+    with Session() as s:
+        query = select(func.avg(ProductReview.rating))
+        res = s.scalar(query)
+        console.print(f"Média de avaliações: {res:.2f}")
+
+
+def media_por_produto():
+    """
+    SELECT p.name, AVG(pr.rating) AS "Média"
+    FROM products_reviews pr
+    INNER JOIN products p ON pr.product_id = p.id
+    GROUP BY p.id
+    ORDER BY AVG(pr.rating) DESC;
+    """
+    with Session() as s:
+        rating_avg = func.avg(ProductReview.rating).label(None)
+        query = (
+            select(Product.name, rating_avg)
+            .join(Product.reviews)
+            .group_by(Product.id)
+            .order_by(rating_avg.desc())
+        )
+        res = s.execute(query).all()
+        for r in res:
+            console.print(f"{r[0]}: {r[1]:.2f}")
+
+
+def percentual_de_avaliacoes_sem_comentarios():
+    """
+    SELECT
+        p.name,
+        100 - CAST(COUNT(pr.comment) AS decimal(10,2)) / CAST(COUNT(pr.rating) AS decimal(10,2)) * 100 AS "Percentual com comentários"
+    from products p
+    INNER JOIN products_reviews pr ON p.id = pr.product_id
+    GROUP BY (p.name)
+    ORDER BY p.name;
+    """
+    with Session() as s:
+        records_with_comments = func.count(ProductReview.comment).label(None)
+        total_records = func.count(ProductReview.rating).label(None)
+        without_comments = 100 - 100 * (records_with_comments / total_records)
+
+        query = (
+            select(Product.name, without_comments)
+            .join(Product.reviews)
+            .group_by(Product.name)
+            .order_by(Product.name)
+        )
+        res = s.execute(query).all()
+
+        for r in res:
+            console.print(f"{r[0]}: {r[1]:.2f}%  de avaliações sem comentários")
 
 
 if __name__ == "__main__":
@@ -235,4 +327,8 @@ if __name__ == "__main__":
     # total_por_pedido()
     # produtos_mais_vendidos()
     # total_pedidos_em_novembro()
-    top5_produtos_mais_vendidos_novembro()
+    # top5_produtos_mais_vendidos_novembro()
+    # unidades_vendida_mes_ano()
+    # media_avaliacoes()
+    # media_por_produto()
+    percentual_de_avaliacoes_sem_comentarios()

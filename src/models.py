@@ -62,6 +62,7 @@ class Product(Model):
         secondary=ProductCountry, back_populates="products"
     )
     order_items: so.WriteOnlyMapped[OrderItem] = so.relationship(back_populates="product")
+    reviews: so.WriteOnlyMapped[ProductReview] = so.relationship(back_populates="product")
 
     @classmethod
     def from_dto(cls):
@@ -111,6 +112,7 @@ class Customer(Model):
     phone: so.Mapped[str] = so.mapped_column(sa.String(20), unique=True)
 
     orders: so.WriteOnlyMapped[Order] = so.relationship(back_populates="customer")
+    reviews: so.WriteOnlyMapped[ProductReview] = so.relationship(back_populates="customer")
 
     def __repr__(self):
         return f'Customer({self.id.hex}, "{self.name}")'
@@ -148,3 +150,19 @@ class OrderItem(Model):
 
     def __repr__(self):
         return f"OrderItem(p_id: {self.product_id}, order_id: {self.order_id})"
+
+
+class ProductReview(Model):
+    __tablename__ = "products_reviews"
+
+    product_id: so.Mapped[int] = so.mapped_column(ForeignKey("products.id"), primary_key=True)
+    customer_id: so.Mapped[uuid.UUID] = so.mapped_column(
+        ForeignKey("customers.id"), primary_key=True
+    )
+    timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
+        sa.DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC), index=True
+    )
+    rating: so.Mapped[int] = so.mapped_column(sa.Integer)
+    comment: so.Mapped[str | None] = so.mapped_column(sa.Text, nullable=True)
+    product: so.Mapped[Product] = so.relationship(back_populates="reviews")
+    customer: so.Mapped[Customer] = so.relationship(back_populates="reviews")
