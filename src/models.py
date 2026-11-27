@@ -29,7 +29,6 @@ import uuid
 
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from sqlalchemy.schema import ForeignKey
 from sqlalchemy.types import DateTime
 
 from src.db import Model
@@ -63,6 +62,7 @@ class Product(Model):
     )
     order_items: so.WriteOnlyMapped[OrderItem] = so.relationship(back_populates="product")
     reviews: so.WriteOnlyMapped[ProductReview] = so.relationship(back_populates="product")
+    articles: so.WriteOnlyMapped[BlogArticle] = so.relationship(back_populates="product")
 
     @classmethod
     def from_dto(cls):
@@ -113,7 +113,8 @@ class Customer(Model):
 
     orders: so.WriteOnlyMapped[Order] = so.relationship(back_populates="customer")
     reviews: so.WriteOnlyMapped[ProductReview] = so.relationship(back_populates="customer")
-
+    blog_users: so.WriteOnlyMapped[BlogUser] = so.relationship(back_populates="customer")
+    
     def __repr__(self):
         return f'Customer({self.id.hex}, "{self.name}")'
 
@@ -124,7 +125,7 @@ class Order(Model):
     timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
         DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC)
     )
-    customer_id: so.Mapped[uuid.UUID] = so.mapped_column(ForeignKey("customers.id"))
+    customer_id: so.Mapped[uuid.UUID] = so.mapped_column(sa.ForeignKey("customers.id"))
 
     customer: so.Mapped[Customer] = so.relationship(
         back_populates="orders", lazy="raise", order_by=timestamp.desc()
@@ -139,9 +140,9 @@ class OrderItem(Model):
     __tablename__ = "orders_items"
 
     product_id: so.Mapped[uuid.UUID] = so.mapped_column(
-        ForeignKey("products.id"), primary_key=True
+        sa.ForeignKey("products.id"), primary_key=True
     )
-    order_id: so.Mapped[uuid.UUID] = so.mapped_column(ForeignKey("orders.id"), primary_key=True)
+    order_id: so.Mapped[uuid.UUID] = so.mapped_column(sa.ForeignKey("orders.id"), primary_key=True)
     unit_price: so.Mapped[decimal.Decimal] = so.mapped_column(sa.DECIMAL(10, 2))
     quantity: so.Mapped[int] = so.mapped_column(sa.Integer)
 
@@ -155,9 +156,9 @@ class OrderItem(Model):
 class ProductReview(Model):
     __tablename__ = "products_reviews"
 
-    product_id: so.Mapped[int] = so.mapped_column(ForeignKey("products.id"), primary_key=True)
+    product_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("products.id"), primary_key=True)
     customer_id: so.Mapped[uuid.UUID] = so.mapped_column(
-        ForeignKey("customers.id"), primary_key=True
+        sa.ForeignKey("customers.id"), primary_key=True
     )
     timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
         sa.DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC), index=True
@@ -166,3 +167,68 @@ class ProductReview(Model):
     comment: so.Mapped[str | None] = so.mapped_column(sa.Text, nullable=True)
     product: so.Mapped[Product] = so.relationship(back_populates="reviews")
     customer: so.Mapped[Customer] = so.relationship(back_populates="reviews")
+
+
+class BlogAuthor(Model):
+    __tablename__ = "blog_authors"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
+
+    articles: so.WriteOnlyMapped[BlogArticle] = so.relationship(back_populates="author")
+
+    def __repr__(self):
+        return f"BlogAuthor({self.id}, '{self.name}')"
+
+
+class BlogArticle(Model):
+    __tablename__ = "blog_articles"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    title: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    author_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("blog_authors.id"))
+    product_id: so.Mapped[int | None] = so.mapped_column(
+        sa.ForeignKey("products.id"), default=None
+    )
+    timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
+        sa.DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC), index=True
+    )
+
+    product: so.Mapped[Product | None] = so.relationship(back_populates="articles")
+    author: so.Mapped[BlogAuthor] = so.relationship(back_populates="articles")
+    views: so.WriteOnlyMapped[BlogView] = so.relationship(back_populates="article")
+
+class BlogUser(Model):
+    __tablename__ = "blog_users"
+    id: so.Mapped[uuid.UUID] = so.mapped_column(default=uuid.uuid4, primary_key=True)
+    customer_id: so.Mapped[uuid.UUID | None] = so.mapped_column(
+        sa.ForeignKey("customers.id"), index=True, default=None
+    )
+    
+    customer: so.Mapped[Customer | None] = so.relationship(back_populates="blog_users")
+    sessions: so.Mapped[BlogSession] = so.relationship(back_populates="user")
+    
+    def __repr__(self):
+        return f"BlogUser({self.id.hex})"
+    
+class BlogSession(Model):
+    __tablename__ = "blog_sessions"
+    id: so.Mapped[uuid.UUID] = so.mapped_column(default=uuid.uuid4, primary_key=True)
+    user_id: so.Mapped[uuid.UUID] = so.mapped_column(sa.ForeignKey("blog_users.id"), index=True)
+    
+    user: so.Mapped[BlogUser] = so.relationship(back_populates="sessions")
+    views: so.WriteOnlyMapped[BlogView] = so.relationship(back_populates="session")
+    def __repr__(self):
+        return f"BlogSession({self.id.hex})"
+
+class BlogView(Model):
+    __tablename__ = "blog_views"
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    article_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("blog_articles.id"))
+    session_id: so.Mapped[uuid.UUID] = so.mapped_column(sa.ForeignKey("blog_sessions.id"))
+
+    timestamp: so.Mapped[datetime.datetime] = so.mapped_column(
+        sa.DateTime(timezone=False), default=datetime.datetime.now(tz=datetime.UTC), index=True
+    )
+    session: so.Mapped[BlogSession] = so.relationship(back_populates="views")
+    article: so.Mapped[BlogArticle] = so.relationship(back_populates="views")
